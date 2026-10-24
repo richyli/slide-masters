@@ -1,4 +1,4 @@
-# 顧問簡報母版庫
+# Slide Master Library（顧問簡報母版庫）
 
 https://richyli.github.io/slide-masters/
 

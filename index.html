@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>顧問簡報母版庫</title>
+<title>Slide Master Library</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -93,7 +93,9 @@ aside.detail { border-left: 1px solid var(--line); background: var(--panel); pad
 .card[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) }
 .card .meta { display: flex; justify-content: space-between; gap: 6px; align-items: baseline; margin-top: 3px }
 .card .id { font: 600 12px var(--mono); color: var(--fc) }
-.card .nm { font-size: 13px; line-height: 1.35 }
+.card .nm { font: 600 12.5px var(--mono); letter-spacing: .03em; line-height: 1.35; overflow-wrap: anywhere }
+.sub { font-weight: 400; color: var(--muted); font-size: .85em }
+.card .sub { font-size: 11.5px; line-height: 1.35 }
 .card .codename { font-size: 10.5px; color: var(--muted); letter-spacing: .04em }
 .empty { color: var(--muted); padding: 8px 0 }
 .lead { display: none; margin: 0 0 10px; color: var(--muted); font-size: 13px }
@@ -192,13 +194,12 @@ table.tt { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 
 }
 @media (max-width: 600px) and (min-width: 340px) {
   .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
-  .card .codename { display: none }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important } }
 </style>
 
 <header class="top wrap">
-  <div class="brand"><h1>顧問簡報母版庫</h1><span class="stat" id="stat"></span></div>
+  <div class="brand"><h1>Slide Master Library <span class="sub">顧問簡報母版庫</span></h1><span class="stat" id="stat"></span></div>
   <div class="tools">
     <label class="search"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg>
       <input id="q" type="search" placeholder="輸入想講的話或代碼，例：比同業高、BRIDGE、R1" aria-label="搜尋母版：輸入想講的話或代碼"></label>
@@ -227,9 +228,9 @@ const famOf = m => L2[m.l2].l1;
 let state = { fam: '', l2: '', q: '', lay: '', sort: 'tree', view: 'm', sel: '' };
 let lastGuess = [];
 
-$('#stat').textContent = `${DB.l1.length} 類意圖 · ${DB.l2.length} 種訊息型式 · ${DB.masters.length} 個母版`;
+$('#stat').textContent = `${DB.l1.length} 類意圖 · ${DB.l2.length} 種訊息型式`;
 const POP = { 3: '高', 2: '中', 1: '低' };
-const popTag = p => `<span class="pop pop${p}">熱門度 ${POP[p]}</span>`;
+const popTag = p => POP[p] && p > 1 ? `<span class="pop pop${p}">熱門度 ${POP[p]}</span>` : '';
 for (const [k, v] of Object.entries(DB.layouts)) $('#lay').insertAdjacentHTML('beforeend', `<option value="${k}">版面骨架：${esc(v)}</option>`);
 
 /* ── 左側：意圖家族，只展開目前一類 ── */
@@ -237,15 +238,15 @@ function famCount(code) { return DB.masters.filter(m => famOf(m) === code).lengt
 function renderTree() {
   let h = `<div class="fams"><button class="all" data-all aria-current="${!state.fam && !state.l2}">全部母版 <span class="cnt">${DB.masters.length}</span></button>`;
   for (const f of DB.l1) {
-    h += `<div class="fam${state.fam === f.code ? ' open' : ''}" style="--fc:var(--f-${f.code})"><button data-fam="${f.code}" aria-expanded="${state.fam === f.code}" aria-current="${state.fam === f.code && !state.l2}"><span class="fc">${f.code}</span><span class="fn">${esc(f.zh)}</span><span class="cnt">${famCount(f.code)}</span><small>${esc(f.q)}</small></button><ul>`;
+    h += `<div class="fam${state.fam === f.code ? ' open' : ''}" style="--fc:var(--f-${f.code})"><button data-fam="${f.code}" aria-expanded="${state.fam === f.code}" aria-current="${state.fam === f.code && !state.l2}"><span class="fc">${f.code}</span><span class="fn">${esc(f.en)} <span class="sub">${esc(f.zh)}</span></span><span class="cnt">${famCount(f.code)}</span><small>${esc(f.q)}</small></button><ul>`;
     for (const t of DB.l2.filter(t => t.l1 === f.code)) {
       const n = DB.masters.filter(m => m.l2 === t.code).length;
-      h += `<li><button data-l2="${t.code}" aria-current="${state.l2 === t.code}" title="${esc(t.q)}"><span class="code">${t.code}</span><span>${esc(t.zh)}</span><span class="cnt">${n}</span></button></li>`;
+      h += `<li><button data-l2="${t.code}" aria-current="${state.l2 === t.code}" title="${esc(t.q)}"><span class="code">${t.code}</span><span>${esc(t.en)} <span class="sub">${esc(t.zh)}</span></span><span class="cnt">${n}</span></button></li>`;
     }
     h += `</ul></div>`;
   }
   h += '</div><div class="l2chips">';
-  if (state.fam) for (const t of DB.l2.filter(t => t.l1 === state.fam)) h += `<button data-l2="${t.code}" aria-current="${state.l2 === t.code}">${t.code} ${esc(t.zh)}</button>`;
+  if (state.fam) for (const t of DB.l2.filter(t => t.l1 === state.fam)) h += `<button data-l2="${t.code}" aria-current="${state.l2 === t.code}">${t.code} ${esc(t.en)}</button>`;
   $('#tree').innerHTML = h + '</div>';
 }
 $('#tree').addEventListener('click', e => {
@@ -295,19 +296,19 @@ function card(m) {
   const t = L2[m.l2];
   return `<button class="card" data-id="${m.id}" aria-current="${state.sel === m.id}" style="--fc:var(--f-${t.l1})">
     ${m.svg}<div class="meta"><span class="id">${m.id}</span>${popTag(m.pop)}</div>
-    <div class="nm">${esc(m.zh)}</div><div class="codename">${esc(m.name)}</div></button>`;
+    <div class="nm">${esc(m.name)}</div><div class="sub">${esc(m.zh)}</div></button>`;
 }
 function intentButtons() {
-  return `<div class="intentbtns">${DB.l1.map(f => `<button data-intent="${f.code}" style="--fc:var(--f-${f.code})"><span class="fc">${f.code}</span><span>${esc(f.zh)}</span><small>${esc(f.q)}</small></button>`).join('')}</div>`;
+  return `<div class="intentbtns">${DB.l1.map(f => `<button data-intent="${f.code}" style="--fc:var(--f-${f.code})"><span class="fc">${f.code}</span><span>${esc(f.en)} <span class="sub">${esc(f.zh)}</span></span><small>${esc(f.q)}</small></button>`).join('')}</div>`;
 }
 function resbar(n) {
   const parts = [];
-  if (state.fam && !state.l2) parts.push(`${state.fam} ${esc(L1[state.fam].zh)}`);
-  if (state.l2) parts.push(`${state.l2} ${esc(L2[state.l2].zh)}`);
+  if (state.fam && !state.l2) parts.push(`${state.fam} ${esc(L1[state.fam].en)}`);
+  if (state.l2) parts.push(`${state.l2} ${esc(L2[state.l2].en)}`);
   if (state.lay) parts.push(`版面骨架：${esc(DB.layouts[state.lay])}`);
   if (state.q) parts.push(`「${esc(state.q)}」`);
   let what = `${parts.length ? parts.join(' · ') + ' → ' : '全部 → '}<b>${n}</b> 個母版`;
-  if (lastGuess.length) what += ` <span class="hint">沒有字面相符，依關鍵詞推測可能是：${lastGuess.map(c => `${c} ${esc(L2[c].zh)}`).join('、')}</span>`;
+  if (lastGuess.length) what += ` <span class="hint">沒有字面相符，依關鍵詞推測可能是：${lastGuess.map(c => `${c} ${esc(L2[c].en)}`).join('、')}</span>`;
   return `<div class="resbar"><div class="what">${what}</div>
     <select id="sort" aria-label="排序"><option value="tree"${state.sort === 'tree' ? ' selected' : ''}>依階層排序</option><option value="freq"${state.sort === 'freq' ? ' selected' : ''}>依熱門度排序</option></select>
     ${parts.length ? '<button class="linkbtn" data-clear>清除條件</button>' : ''}</div>`;
@@ -319,7 +320,7 @@ function renderGrid() {
   if (!state.fam && !state.q && !state.lay) h += `<p class="lead">依「這頁要讓聽眾記住什麼」分成 ${DB.l1.length} 類意圖、${DB.l2.length} 種型式。在搜尋框打一句想講的話，例如「我們的成本比同業高」。</p>`;
   if (state.l2) {
     const t = L2[state.l2];
-    h += `<div class="typebar" style="--fc:var(--f-${t.l1})"><h2><span class="codename">${t.code} ${t.codename}</span>${esc(t.zh)} <span class="cnt">${esc(t.en)}</span></h2><p><b>回答的問題：</b>${esc(t.q)}</p><p><b>標題句型：</b>${esc(t.pattern)}</p></div>`;
+    h += `<div class="typebar" style="--fc:var(--f-${t.l1})"><h2><span class="codename">${t.code} ${t.codename}</span>${esc(t.en)} <span class="cnt">${esc(t.zh)}</span></h2><p><b>回答的問題：</b>${esc(t.q)}</p><p><b>標題句型：</b>${esc(t.pattern)}</p></div>`;
   }
   if (!list.length) {
     $('#grid').innerHTML = h + `<p class="empty">找不到符合的母版。可以清除條件，或從「這頁要讓聽眾知道什麼」開始找：</p>${intentButtons()}`;
@@ -330,7 +331,7 @@ function renderGrid() {
   else {
     let cur = '';
     for (const m of list) {
-      if (m.l2 !== cur && !state.l2) { cur = m.l2; const t = L2[cur]; h += `<div class="grouphead"><b>${t.code} ${esc(t.zh)}</b><span class="codename" style="color:var(--f-${t.l1})">${t.codename}</span><span class="cnt">${esc(t.q)}</span></div>` }
+      if (m.l2 !== cur && !state.l2) { cur = m.l2; const t = L2[cur]; h += `<div class="grouphead"><b>${t.code} ${esc(t.en)}</b><span class="sub">${esc(t.zh)}</span><span class="codename" style="color:var(--f-${t.l1})">${t.codename}</span><span class="cnt">${esc(t.q)}</span></div>` }
       h += card(m);
     }
   }
@@ -340,10 +341,10 @@ function renderGrid() {
 function renderTypes() {
   let h = '<div class="typetable">';
   for (const f of DB.l1) {
-    h += `<section style="--fc:var(--f-${f.code})"><h2><span class="fc">${f.code}</span>${esc(f.zh)} <span class="cnt">${esc(f.en)}｜${esc(f.q)}</span></h2><div class="ttwrap"><table class="tt"><thead><tr><th>代碼</th><th>英文代號</th><th>型式</th><th>回答的問題</th><th>標題句型</th><th>熱門度</th><th>母版</th></tr></thead><tbody>`;
+    h += `<section style="--fc:var(--f-${f.code})"><h2><span class="fc">${f.code}</span>${esc(f.en)} <span class="cnt">${esc(f.zh)}｜${esc(f.q)}</span></h2><div class="ttwrap"><table class="tt"><thead><tr><th>代碼</th><th>英文代號</th><th>型式</th><th>回答的問題</th><th>標題句型</th><th>熱門度</th><th>母版</th></tr></thead><tbody>`;
     for (const t of DB.l2.filter(t => t.l1 === f.code)) {
       const ms = DB.masters.filter(m => m.l2 === t.code);
-      h += `<tr><td class="c"><button data-goto="${t.code}">${t.code}</button></td><td class="c">${t.codename}</td><td>${esc(t.zh)}<br><span class="cnt">${esc(t.en)}</span></td><td>${esc(t.q)}</td><td>${esc(t.pattern)}</td><td class="n">${popTag(t.pop)}</td><td><button data-goto="${t.code}">${ms.length} 個</button></td></tr>`;
+      h += `<tr><td class="c"><button data-goto="${t.code}">${t.code}</button></td><td class="c">${t.codename}</td><td>${esc(t.en)}<br><span class="cnt">${esc(t.zh)}</span></td><td>${esc(t.q)}</td><td>${esc(t.pattern)}</td><td class="n">${popTag(t.pop)}</td><td><button data-goto="${t.code}">${ms.length} 個</button></td></tr>`;
     }
     h += '</tbody></table></div></section>';
   }
@@ -382,9 +383,9 @@ function select(id, open) {
   const t = L2[m.l2], f = L1[t.l1];
   const sibs = DB.masters.filter(x => x.l2 === m.l2 && x.id !== id);
   let h = `<button class="close" id="close">關閉 ✕</button>
-    <div class="crumb"><span>${f.code} ${esc(f.zh)}</span>›<span>${t.code} ${t.codename} ${esc(t.zh)}</span>›<b>${m.id}</b></div>
-    <h2>${esc(m.zh)}</h2><div class="codename" style="color:var(--f-${f.code})">${esc(m.name)}</div>`;
-  if (sibs.length) h += `<div class="sibchips"><span>同型式：</span>${sibs.map(s => `<button data-sib="${s.id}"><b>${s.id}</b>${esc(s.zh)}</button>`).join('')}</div>`;
+    <div class="crumb"><span>${f.code} ${esc(f.en)}</span>›<span>${t.code} ${t.codename} ${esc(t.en)}</span>›<b>${m.id}</b></div>
+    <h2>${esc(m.name)}</h2><div class="sub">${esc(m.zh)}</div>`;
+  if (sibs.length) h += `<div class="sibchips"><span>同型式：</span>${sibs.map(s => `<button data-sib="${s.id}"><b>${s.id}</b>${esc(s.name)}</button>`).join('')}</div>`;
   h += `<div class="big">${m.svg}</div>`;
   if (LOCAL && m.refs && m.refs.length) h += `<h3>參考頁 <span class="localtag">本機版才有</span></h3><div class="refs">${m.refs.map(r => `<button data-img="${r.img}" data-cap="${esc(r.cap)}"><img loading="lazy" src="${r.img}" alt="${esc(r.cap)}"><span>${esc(r.deck)} p${r.page}</span></button>`).join('')}</div>`;
   h += `<div class="stats">${popTag(m.pop)}<span>版面骨架：${esc(DB.layouts[m.lay] || m.lay)}</span>${m.chart ? `<span>常用圖表：${esc(m.chart)}</span>` : ''}</div>
